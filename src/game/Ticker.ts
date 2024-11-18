@@ -7,7 +7,6 @@ class TickerRaster extends Raster {
 
   constructor(width: number, height: number) {
     super({
-      // smoothing: true,
       width,
       height,
       quality: 2,
@@ -31,7 +30,6 @@ class TickerRaster extends Raster {
 }
 
 export class Ticker extends Actor {
-  private isSwinging = false;
   private readonly swingAngle = -Math.PI / 5; // Maximum swing angle in radians
 
   constructor({
@@ -67,23 +65,5 @@ export class Ticker extends Actor {
 
   stop() {
     this.rotation = 0;
-    this.isSwinging = false;
   }
-
-  // update(engine: Game, delta: number): void {
-  //   super.update(engine, delta);
-
-  //   if (this.isSwinging) {
-  //     this.swingTime += delta;
-
-  //     if (this.swingTime >= this.swingDuration) {
-  //       this.rotation = 0;
-  //       this.isSwinging = false;
-  //     } else {
-  //       // const progress = this.swingTime / this.swingDuration;
-  //       // this.rotation = Math.sin(progress * Math.PI) * this.swingAngle;
-  //       this.rotation = this.swingAngle;
-  //     }
-  //   }
-  // }
 }
