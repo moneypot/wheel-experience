@@ -1,5 +1,14 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { Container, Row, Col, Form, Button, Alert } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Col,
+  Form,
+  Button,
+  Alert,
+  Nav,
+  Navbar,
+} from "react-bootstrap";
 import { makeGame } from "./game";
 import { Game } from "./game/Game";
 import { useStore } from "./Store";
@@ -9,6 +18,7 @@ import { useSubscription } from "./use-subscription";
 import { Risk } from "./__generated__/graphql";
 import { MAKE_WHEEL_BET, sendGraphQLRequest } from "./graphql";
 import { runInAction } from "mobx";
+import WithdrawModal from "./components/WithdrawModal";
 
 // TODO: Dangerously copy-pasted from the server
 // This is catastrophic for the user if it desyncs from server.
@@ -62,6 +72,7 @@ const App = observer(() => {
   const [segments, setSegments] = useState<10 | 30 | 50>(30);
   const [spinning, setSpinning] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [showModal, setShowModal] = useState(false);
   useSubscription(store);
 
   const multipliers = Wheels[risk][segments];
@@ -164,123 +175,140 @@ const App = observer(() => {
   };
 
   return (
-    <Container className="vh-100 p-3">
-      {authResult.error && <Alert variant="danger">{authResult.error}</Alert>}
-      {authResult.loading && <Alert variant="info">Loading...</Alert>}
-      {store.loggedIn?.balances.length === 0 && (
-        <Alert variant="warning">
-          Deposit money into this experience to begin betting.
-        </Alert>
+    <>
+      {showModal && (
+        <WithdrawModal show={showModal} hide={() => setShowModal(false)} />
       )}
-      <Row className="h-100">
-        <Col xs={12} md={4} className="mb-3">
-          <Form className="mb-3" onSubmit={submitBet}>
-            <Form.Group>
-              <Form.Label>Currency</Form.Label>
-              <Form.Select
-                onChange={handleCurrencyChange}
-                value={store.loggedIn?.selectedCurrencyKey ?? undefined}
-              >
-                {store.loggedIn?.balances.map((balance) => (
-                  <option key={balance.currencyKey} value={balance.currencyKey}>
-                    {balance.currencyKey}:{" "}
-                    {balance.amount / balance.displayUnitScale}{" "}
-                    {balance.displayUnitName}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
 
-            <Form.Group className="mt-2">
-              <Form.Label>Wager</Form.Label>
-              <Form.Control
-                type="number"
-                name="wager"
-                inputMode="numeric"
-                placeholder="Enter wager amount"
-                pattern="^\d*\.?\d*$"
-                title="Invalid wager"
-                required
-                value={wagerString}
-                onInput={handleWagerChange}
-              />
-            </Form.Group>
-
-            <Form.Group>
-              <Form.Label className="mt-2">Risk</Form.Label>
-              <Form.Select
-                onChange={(e) => {
-                  changeRisk(e.target.value as Risk);
-                }}
-                value={risk}
-              >
-                {["LOW", "MEDIUM", "HIGH"].map((r) => (
-                  <option key={r} value={r}>
-                    {r[0] + r.slice(1).toLowerCase()}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-
-            <Form.Group>
-              <Form.Label className="mt-2">Segments</Form.Label>
-              <Form.Select
-                onChange={(e) => {
-                  const segments = Number(e.target.value) as 10 | 30 | 50;
-                  changeSegments(segments);
-                }}
-                value={segments}
-              >
-                {[10, 30, 50].map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-
-            <Form.Group className="mt-3">
-              {submitError && (
-                <Alert
-                  variant="danger"
-                  dismissible
-                  onClose={() => setSubmitError("")}
+      <Container className="vh-100 p-3">
+        {authResult.error && <Alert variant="danger">{authResult.error}</Alert>}
+        {authResult.loading && <Alert variant="info">Loading...</Alert>}
+        {store.loggedIn?.balances.length === 0 && (
+          <Alert variant="warning">
+            Deposit money into this experience to begin betting.
+          </Alert>
+        )}
+        <Navbar>
+          {/* <Navbar.Brand>My Casino</Navbar.Brand> */}
+          <Nav className="ms-auto">
+            <Nav.Link href="#home" onClick={() => setShowModal(true)}>
+              Withdraw
+            </Nav.Link>
+          </Nav>
+        </Navbar>
+        <Row className="h-100">
+          <Col xs={12} md={4} className="mb-3">
+            <Form className="mb-3" onSubmit={submitBet}>
+              <Form.Group>
+                <Form.Label>Currency</Form.Label>
+                <Form.Select
+                  onChange={handleCurrencyChange}
+                  value={store.loggedIn?.selectedCurrencyKey ?? undefined}
                 >
-                  {submitError}
-                </Alert>
-              )}
-              <Button
-                type="submit"
-                variant="primary"
-                className={"w-100 " + (spinning ? "disabled" : "")}
-              >
-                Bet
-              </Button>
-            </Form.Group>
-          </Form>
-        </Col>
+                  {store.loggedIn?.balances.map((balance) => (
+                    <option
+                      key={balance.currencyKey}
+                      value={balance.currencyKey}
+                    >
+                      {balance.currencyKey}:{" "}
+                      {balance.amount / balance.displayUnitScale}{" "}
+                      {balance.displayUnitName}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
 
-        <Col xs={12} md={8} style={{ textAlign: "center" }}>
-          <div
-            style={{
-              width: "100%",
-              maxWidth: "550px",
-              margin: "0 auto",
-              height: "100%",
-            }}
-          >
-            <canvas
-              ref={canvasRef}
+              <Form.Group className="mt-2">
+                <Form.Label>Wager</Form.Label>
+                <Form.Control
+                  type="number"
+                  name="wager"
+                  inputMode="numeric"
+                  placeholder="Enter wager amount"
+                  pattern="^\d*\.?\d*$"
+                  title="Invalid wager"
+                  required
+                  value={wagerString}
+                  onInput={handleWagerChange}
+                />
+              </Form.Group>
+
+              <Form.Group>
+                <Form.Label className="mt-2">Risk</Form.Label>
+                <Form.Select
+                  onChange={(e) => {
+                    changeRisk(e.target.value as Risk);
+                  }}
+                  value={risk}
+                >
+                  {["LOW", "MEDIUM", "HIGH"].map((r) => (
+                    <option key={r} value={r}>
+                      {r[0] + r.slice(1).toLowerCase()}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+
+              <Form.Group>
+                <Form.Label className="mt-2">Segments</Form.Label>
+                <Form.Select
+                  onChange={(e) => {
+                    const segments = Number(e.target.value) as 10 | 30 | 50;
+                    changeSegments(segments);
+                  }}
+                  value={segments}
+                >
+                  {[10, 30, 50].map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+
+              <Form.Group className="mt-3">
+                {submitError && (
+                  <Alert
+                    variant="danger"
+                    dismissible
+                    onClose={() => setSubmitError("")}
+                  >
+                    {submitError}
+                  </Alert>
+                )}
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className={"w-100 " + (spinning ? "disabled" : "")}
+                >
+                  Bet
+                </Button>
+              </Form.Group>
+            </Form>
+          </Col>
+
+          <Col xs={12} md={8} style={{ textAlign: "center" }}>
+            <div
               style={{
-                height: "auto",
-                pointerEvents: "none",
+                width: "100%",
+                maxWidth: "550px",
+                margin: "0 auto",
+                height: "100%",
               }}
-            />
-          </div>
-        </Col>
-      </Row>
-      <pre>{JSON.stringify(store, null, 2)}</pre>
-    </Container>
+            >
+              <canvas
+                ref={canvasRef}
+                style={{
+                  height: "auto",
+                  pointerEvents: "none",
+                }}
+              />
+            </div>
+          </Col>
+        </Row>
+        <pre>{JSON.stringify(store, null, 2)}</pre>
+      </Container>
+    </>
   );
 });
 
