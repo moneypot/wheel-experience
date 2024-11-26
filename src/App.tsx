@@ -195,7 +195,7 @@ const App = observer(() => {
             </Nav.Link>
           </Nav>
         </Navbar>
-        <Row className="h-100">
+        <Row>
           <Col xs={12} md={4} className="mb-3">
             <Form className="mb-3" onSubmit={submitBet}>
               <Form.Group>
@@ -292,7 +292,7 @@ const App = observer(() => {
                 width: "100%",
                 maxWidth: "550px",
                 margin: "0 auto",
-                height: "100%",
+                height: "550px",
               }}
             >
               <canvas
