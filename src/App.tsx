@@ -189,9 +189,8 @@ const App = observer(() => {
           </Alert>
         )}
         <Navbar>
-          {/* <Navbar.Brand>My Casino</Navbar.Brand> */}
           <Nav className="ms-auto">
-            <Nav.Link href="#home" onClick={() => setShowModal(true)}>
+            <Nav.Link as={Button} onClick={() => setShowModal(true)}>
               Withdraw
             </Nav.Link>
           </Nav>
