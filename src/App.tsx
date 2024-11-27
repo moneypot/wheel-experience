@@ -19,6 +19,7 @@ import { Risk } from "./__generated__/graphql";
 import { MAKE_WHEEL_BET, sendGraphQLRequest } from "./graphql";
 import { runInAction } from "mobx";
 import WithdrawModal from "./components/WithdrawModal";
+import { formatError } from "./util";
 
 // TODO: Dangerously copy-pasted from the server
 // This is catastrophic for the user if it desyncs from server.
@@ -305,28 +306,10 @@ const App = observer(() => {
             </div>
           </Col>
         </Row>
-        <pre>{JSON.stringify(store, null, 2)}</pre>
+        {import.meta.env.DEV && <pre>{JSON.stringify(store, null, 2)}</pre>}
       </Container>
     </>
   );
 });
 
 export default App;
-
-// Get an error string from GraphQLErrors and Errors
-function formatError(e: unknown): string {
-  if (!e) return "Unknown error";
-  if (
-    // Check for GraphQLError
-    typeof e === "object" &&
-    "response" in e &&
-    typeof (e as { response: unknown }).response === "object" &&
-    (e as { response: { errors: { message: string }[] } }).response.errors?.[0]
-      ?.message
-  ) {
-    return (e as { response: { errors: { message: string }[] } }).response
-      .errors[0].message;
-  }
-  if (e instanceof Error) return e.message;
-  return String(e);
-}
