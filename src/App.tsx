@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useState } from "react";
 import {
   Container,
   Row,
@@ -9,8 +9,6 @@ import {
   Nav,
   Navbar,
 } from "react-bootstrap";
-import { makeGame } from "./game";
-import { Game } from "./game/Game";
 import { useStore } from "./Store";
 import { useAuthenticate } from "./use-authenticate";
 import { observer } from "mobx-react-lite";
@@ -20,6 +18,7 @@ import { MAKE_WHEEL_BET, sendGraphQLRequest } from "./graphql";
 import { runInAction } from "mobx";
 import WithdrawModal from "./components/WithdrawModal";
 import { formatError } from "./util";
+import Wheel from "./Wheel";
 
 // TODO: Dangerously copy-pasted from the server
 // This is catastrophic for the user if it desyncs from server.
@@ -66,23 +65,26 @@ const Wheels: Record<string, Record<number, number[]>> = {
 const App = observer(() => {
   const store = useStore();
   const authResult = useAuthenticate(store);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const gameRef = useRef<Game | null>(null);
   const [wagerString, setWagerString] = useState("");
   const [risk, setRisk] = useState<Risk>(Risk.Medium);
   const [segments, setSegments] = useState<10 | 30 | 50>(30);
   const [spinning, setSpinning] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [spinToIndex, setSpinToIndex] = useState<number | null>(null);
   useSubscription(store);
 
   const multipliers = Wheels[risk][segments];
 
-  useEffect(() => {
-    const canvasElement = canvasRef.current!;
-    const game = makeGame({ canvasElement, multipliers });
-    gameRef.current = game;
-  }, []);
+  // useEffect(() => {
+  //   const canvasElement = canvasRef.current!;
+  //   const game = makeGame({ canvasElement, multipliers });
+  //   gameRef.current = game;
+  // }, []);
+
+  const handleWheelStop = () => {
+    setSpinning(false);
+  };
 
   const submitBet = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -132,13 +134,13 @@ const App = observer(() => {
           (i) => multipliers[i] === multiplier
         );
         const randomIdx = indexes[Math.floor(Math.random() * indexes.length)];
-        return gameRef.current?.stopAt(randomIdx);
+        setSpinToIndex(randomIdx);
       })
       .catch((e) => {
         setSubmitError(formatError(e));
       })
       .finally(() => {
-        setSpinning(false);
+        // setSpinning(false);
       });
   };
 
@@ -147,7 +149,6 @@ const App = observer(() => {
       return;
     }
     setSegments(segments);
-    gameRef.current!.setMultipliers(Wheels[risk][segments]);
   };
 
   const changeRisk = (risk: Risk) => {
@@ -158,7 +159,6 @@ const App = observer(() => {
       return;
     }
     setRisk(risk);
-    gameRef.current!.setMultipliers(multipliers);
   };
 
   const handleCurrencyChange = (e: FormEvent<HTMLSelectElement>) => {
@@ -199,111 +199,102 @@ const App = observer(() => {
         <Row>
           <Col xs={12} md={4} className="mb-3">
             <Form className="mb-3" onSubmit={submitBet}>
-              <Form.Group>
-                <Form.Label>Currency</Form.Label>
-                <Form.Select
-                  onChange={handleCurrencyChange}
-                  value={store.loggedIn?.selectedCurrencyKey ?? undefined}
-                >
-                  {store.loggedIn?.balances.map((balance) => (
-                    <option
-                      key={balance.currencyKey}
-                      value={balance.currencyKey}
-                    >
-                      {balance.currencyKey}:{" "}
-                      {balance.amount / balance.displayUnitScale}{" "}
-                      {balance.displayUnitName}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-
-              <Form.Group className="mt-2">
-                <Form.Label>Wager</Form.Label>
-                <Form.Control
-                  type="number"
-                  name="wager"
-                  inputMode="numeric"
-                  placeholder="Enter wager amount"
-                  pattern="^\d*\.?\d*$"
-                  title="Invalid wager"
-                  required
-                  value={wagerString}
-                  onInput={handleWagerChange}
-                />
-              </Form.Group>
-
-              <Form.Group>
-                <Form.Label className="mt-2">Risk</Form.Label>
-                <Form.Select
-                  onChange={(e) => {
-                    changeRisk(e.target.value as Risk);
-                  }}
-                  value={risk}
-                >
-                  {["LOW", "MEDIUM", "HIGH"].map((r) => (
-                    <option key={r} value={r}>
-                      {r[0] + r.slice(1).toLowerCase()}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-
-              <Form.Group>
-                <Form.Label className="mt-2">Segments</Form.Label>
-                <Form.Select
-                  onChange={(e) => {
-                    const segments = Number(e.target.value) as 10 | 30 | 50;
-                    changeSegments(segments);
-                  }}
-                  value={segments}
-                >
-                  {[10, 30, 50].map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-
-              <Form.Group className="mt-3">
-                {submitError && (
-                  <Alert
-                    variant="danger"
-                    dismissible
-                    onClose={() => setSubmitError("")}
+              <fieldset disabled={spinning}>
+                <Form.Group>
+                  <Form.Label>Currency</Form.Label>
+                  <Form.Select
+                    onChange={handleCurrencyChange}
+                    value={store.loggedIn?.selectedCurrencyKey ?? undefined}
                   >
-                    {submitError}
-                  </Alert>
-                )}
-                <Button
-                  type="submit"
-                  variant="primary"
-                  className={"w-100 " + (spinning ? "disabled" : "")}
-                >
-                  Bet
-                </Button>
-              </Form.Group>
+                    {store.loggedIn?.balances.map((balance) => (
+                      <option
+                        key={balance.currencyKey}
+                        value={balance.currencyKey}
+                      >
+                        {balance.currencyKey}:{" "}
+                        {balance.amount / balance.displayUnitScale}{" "}
+                        {balance.displayUnitName}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+
+                <Form.Group className="mt-2">
+                  <Form.Label>Wager</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="wager"
+                    inputMode="numeric"
+                    placeholder="Enter wager amount"
+                    pattern="^\d*\.?\d*$"
+                    title="Invalid wager"
+                    required
+                    value={wagerString}
+                    onInput={handleWagerChange}
+                  />
+                </Form.Group>
+
+                <Form.Group>
+                  <Form.Label className="mt-2">Risk</Form.Label>
+                  <Form.Select
+                    onChange={(e) => {
+                      changeRisk(e.target.value as Risk);
+                    }}
+                    value={risk}
+                  >
+                    {["LOW", "MEDIUM", "HIGH"].map((r) => (
+                      <option key={r} value={r}>
+                        {r[0] + r.slice(1).toLowerCase()}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+
+                <Form.Group>
+                  <Form.Label className="mt-2">Segments</Form.Label>
+                  <Form.Select
+                    onChange={(e) => {
+                      const segments = Number(e.target.value) as 10 | 30 | 50;
+                      changeSegments(segments);
+                    }}
+                    value={segments}
+                  >
+                    {[10, 30, 50].map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+
+                <Form.Group className="mt-3">
+                  {submitError && (
+                    <Alert
+                      variant="danger"
+                      dismissible
+                      onClose={() => setSubmitError("")}
+                    >
+                      {submitError}
+                    </Alert>
+                  )}
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    className={"w-100 " + (spinning ? "disabled" : "")}
+                  >
+                    Bet
+                  </Button>
+                </Form.Group>
+              </fieldset>
             </Form>
           </Col>
 
           <Col xs={12} md={8} style={{ textAlign: "center" }}>
-            <div
-              style={{
-                width: "100%",
-                maxWidth: "550px",
-                margin: "0 auto",
-                height: "550px",
-              }}
-            >
-              <canvas
-                ref={canvasRef}
-                style={{
-                  height: "auto",
-                  pointerEvents: "none",
-                }}
-              />
-            </div>
+            <Wheel
+              multipliers={multipliers}
+              targetIndex={spinToIndex}
+              onCompleted={handleWheelStop}
+            />
           </Col>
         </Row>
         {import.meta.env.DEV && <pre>{JSON.stringify(store, null, 2)}</pre>}
