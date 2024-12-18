@@ -45,16 +45,14 @@ function getColorForMultiplier(multiplier: number): string {
 }
 
 export type WheelProps = {
-  // wheels: Record<Risk, Record<10 | 30 | 50, number[]>>;
   multipliers: number[];
-  // risk: Risk;
-  // segments: 10 | 30 | 50;
   targetIndex: number | null;
   onCompleted?: () => void;
+  nonce: number;
 };
 
 const Wheel: React.FC<WheelProps> = observer(
-  ({ multipliers, targetIndex, onCompleted }) => {
+  ({ multipliers, targetIndex, onCompleted, nonce }) => {
     const [spinning, setSpinning] = useState(false);
     const [showResult, setShowResult] = useState(false);
     const [landedMultiplier, setLandedMultiplier] = useState(0);
@@ -64,6 +62,7 @@ const Wheel: React.FC<WheelProps> = observer(
     const spinWheel = useCallback(
       (targetIndex: number) => {
         if (spinning) return;
+        playSound("bet");
         setSpinning(true);
         setShowResult(false);
 
@@ -106,7 +105,7 @@ const Wheel: React.FC<WheelProps> = observer(
       if (targetIndex !== null && !spinning) {
         spinWheel(targetIndex);
       }
-    }, [targetIndex]);
+    }, [targetIndex, nonce]);
 
     const radius = 180;
     const strokeWidth = 20;

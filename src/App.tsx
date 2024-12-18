@@ -72,15 +72,10 @@ const App = observer(() => {
   const [submitError, setSubmitError] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [spinToIndex, setSpinToIndex] = useState<number | null>(null);
+  const [nonce, setNonce] = useState(0); // Help us tell Wheel to spin on consecutive identical bets
   useSubscription(store);
 
   const multipliers = Wheels[risk][segments];
-
-  // useEffect(() => {
-  //   const canvasElement = canvasRef.current!;
-  //   const game = makeGame({ canvasElement, multipliers });
-  //   gameRef.current = game;
-  // }, []);
 
   const handleWheelStop = () => {
     setSpinning(false);
@@ -134,6 +129,7 @@ const App = observer(() => {
           (i) => multipliers[i] === multiplier
         );
         const randomIdx = indexes[Math.floor(Math.random() * indexes.length)];
+        setNonce((n) => n + 1);
         setSpinToIndex(randomIdx);
       })
       .catch((e) => {
@@ -294,6 +290,7 @@ const App = observer(() => {
               multipliers={multipliers}
               targetIndex={spinToIndex}
               onCompleted={handleWheelStop}
+              nonce={nonce}
             />
           </Col>
         </Row>
