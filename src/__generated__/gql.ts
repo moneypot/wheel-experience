@@ -17,7 +17,7 @@ const documents = {
     "\n  mutation Authenticate($casinoBaseUrl: String!, $userToken: String!) {\n    caasAuthenticate(\n      input: { casinoBaseUrl: $casinoBaseUrl, userToken: $userToken }\n    ) {\n      success {\n        sessionId\n        uname\n        experienceId\n        userId\n      }\n      query {\n        caasCurrentUser {\n          balances {\n            amount\n            currencyKey\n            caasCurrencyByCurrencyKeyAndCasinoId {\n              displayUnitName\n              displayUnitScale\n            }\n          }\n        }\n      }\n    }\n  }\n": types.AuthenticateDocument,
     "\n  query GetBalances {\n    caasCurrentUser {\n      balances {\n        amount\n        currencyKey\n        caasCurrencyByCurrencyKeyAndCasinoId {\n          key\n          displayUnitScale\n          displayUnitName\n        }\n      }\n    }\n  }\n": types.GetBalancesDocument,
     "\n  mutation MakeWheelBet(\n    $wager: Float!\n    $currency: String!\n    $risk: Risk!\n    $segments: Int!\n  ) {\n    makeWheelBet(\n      input: {\n        wager: $wager\n        currency: $currency\n        risk: $risk\n        segments: $segments\n      }\n    ) {\n      multiplier\n    }\n  }\n": types.MakeWheelBetDocument,
-    "\n  mutation Withdraw($amount: Float!, $currencyKey: String!) {\n    caasWithdraw(input: { amount: $amount, currency: $currencyKey }) {\n      withdrawal {\n        id\n      }\n    }\n  }\n": types.WithdrawDocument,
+    "\n  mutation Withdraw($amount: Int!, $currencyKey: String!) {\n    caasWithdraw(input: { amount: $amount, currency: $currencyKey }) {\n      withdrawal {\n        id\n      }\n    }\n  }\n": types.WithdrawDocument,
 };
 
 /**
@@ -49,7 +49,7 @@ export function gql(source: "\n  mutation MakeWheelBet(\n    $wager: Float!\n   
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  mutation Withdraw($amount: Float!, $currencyKey: String!) {\n    caasWithdraw(input: { amount: $amount, currency: $currencyKey }) {\n      withdrawal {\n        id\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation Withdraw($amount: Float!, $currencyKey: String!) {\n    caasWithdraw(input: { amount: $amount, currency: $currencyKey }) {\n      withdrawal {\n        id\n      }\n    }\n  }\n"];
+export function gql(source: "\n  mutation Withdraw($amount: Int!, $currencyKey: String!) {\n    caasWithdraw(input: { amount: $amount, currency: $currencyKey }) {\n      withdrawal {\n        id\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation Withdraw($amount: Int!, $currencyKey: String!) {\n    caasWithdraw(input: { amount: $amount, currency: $currencyKey }) {\n      withdrawal {\n        id\n      }\n    }\n  }\n"];
 
 export function gql(source: string) {
   return (documents as any)[source] ?? {};

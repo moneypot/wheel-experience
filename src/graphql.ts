@@ -67,7 +67,7 @@ export const MAKE_WHEEL_BET = gql(/* GraphQL */ `
 `);
 
 export const WITHDRAW = gql(/* GraphQL */ `
-  mutation Withdraw($amount: Float!, $currencyKey: String!) {
+  mutation Withdraw($amount: Int!, $currencyKey: String!) {
     caasWithdraw(input: { amount: $amount, currency: $currencyKey }) {
       withdrawal {
         id
