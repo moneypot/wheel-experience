@@ -59,6 +59,11 @@ const Wheel: React.FC<WheelProps> = observer(
     // Start in middle of 0th segment
     const [rotation, setRotation] = useState(360 / multipliers.length / 2);
 
+    // Stop showing prev result when user changes the wheel
+    useEffect(() => {
+      setShowResult(false);
+    }, [multipliers]);
+
     const spinWheel = useCallback(
       (targetIndex: number) => {
         if (spinning) return;
